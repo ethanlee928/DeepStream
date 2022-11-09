@@ -94,7 +94,7 @@ def _create_Gst_element(type: str, name: str) -> Gst.Element:
 
 def main(args):
     video_path = args.video_path
-    enable_tracker = args.enable_tracker
+    disable_tracker = args.disable_tracker
 
     Gst.init(None)
 
@@ -142,7 +142,7 @@ def main(args):
     # Create nvstreammux instance to form batches from one or more sources.
     streammux = _create_Gst_element(type="nvstreammux", name="nvstreammux")
     pgie = _create_Gst_element(type="nvinfer", name="primary-inference")
-    if enable_tracker:
+    if not disable_tracker:
         tracker = _create_Gst_element(type="nvtracker", name="tracker")
     debatcher = _create_Gst_element(type="nvstreamdemux", name="streamdemux")
 
@@ -169,7 +169,7 @@ def main(args):
         for sink in sinks:
             sink.set_property("sync", True)
 
-    if enable_tracker:
+    if not disable_tracker:
         for key in config["tracker"]:
             if key == "tracker-width":
                 tracker_width = config.getint("tracker", key)
@@ -209,7 +209,7 @@ def main(args):
 
     pipeline.add(streammux)
     pipeline.add(pgie)
-    if enable_tracker:
+    if not disable_tracker:
         pipeline.add(tracker)
     pipeline.add(debatcher)
 
@@ -239,7 +239,7 @@ def main(args):
 
     # sources -> nvstreammux -> inference -> tracker -> nvstreamdemux -> sinks
     streammux.link(pgie)
-    if enable_tracker:
+    if not disable_tracker:
         pgie.link(tracker)
         tracker.link(debatcher)
     else:
@@ -301,7 +301,7 @@ if __name__ == "__main__":
         help="number of sources going into nvstreamux",
     )
     parser.add_argument(
-        "--enable-tracker", action="store_true", help="link tracker in pipeline or not"
+        "--disable-tracker", action="store_true", help="link tracker in pipeline or not"
     )
     parser.add_argument("--sync", action="store_true", help="sync of fakesink")
 
