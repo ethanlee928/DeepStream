@@ -119,7 +119,7 @@ def main(args):
         # sources
         source = _create_Gst_element(type="filesrc", name=f"file-source-{i}")
         qtdemux = _create_Gst_element(type="qtdemux", name=f"qtdemux-{i}")
-        parser = _create_Gst_element(type="h264parse", name=f"h264-parser-{i}")
+        parser = _create_Gst_element(type=f"{args.codec}parse", name=f"{args.codec}-parser-{i}")
         decoder = _create_Gst_element(type="nvv4l2decoder", name=f"decoder-{i}")
 
         # sinks
@@ -280,13 +280,14 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--video-path", type=str, help="path to video file")
+    parser.add_argument("--video-path", type=str, help="path to video file", default="/opt/nvidia/deepstream/deepstream-6.1/samples/streams/sample_1080p_h264.mp4")
     parser.add_argument(
         "--pgie-config",
         type=str,
         default="./models/pgie/pgie.txt",
         help="path to pgie config",
     )
+    parser.add_argument("--codec", type=str, choices=["h264", "h265"], default="h264")
     parser.add_argument(
         "--tracker-config",
         type=str,

@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/deepstream:6.1.1-base
+FROM nvcr.io/nvidia/deepstream:6.1.1-samples
 
 ENV TZ=Asia/Hong_Kong
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
