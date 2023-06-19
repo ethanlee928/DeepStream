@@ -9,5 +9,5 @@ Tested with:
 ## Start command
 
 ```bash
-python3 deepstream.py -n {number of sources} --video-path {path to input video} --pgie-config {path to pgie config} --tracker-config {path to tracker config}
+python3 main.py -n {number of sources} --video-path {path to input video} --pgie-config {path to pgie config} --tracker-config {path to tracker config}
 ```

@@ -19,6 +19,8 @@
 
 import argparse
 import sys
+import time
+from typing import Dict
 
 import configparser
 
@@ -29,8 +31,26 @@ from gi.repository import GLib, Gst
 
 import pyds
 
+
+class FPSTickers:
+    def __init__(self, src_id, interval=1) -> None:
+        self.src_id = src_id
+        self.count = 0
+        self.interval = interval
+        self.last_report = time.time()
+
+    def tick(self):
+        self.count += 1
+        now = time.time()
+        if now - self.last_report > self.interval:
+            print(f"[src-{self.src_id}] {self.count // (now - self.last_report)}")
+            self.count = 0
+            self.last_report = now
+
+
 # dictionary storing the total counted objects from all frames by different sources
 TOTAL_COUNT = {}
+TICKERS: Dict[str, FPSTickers] = {}
 
 
 def bus_call(bus, message, loop):
@@ -64,6 +84,10 @@ def osd_sink_pad_buffer_probe(pad, info, u_data):
     if not gst_buffer:
         print("Unable to get GstBuffer ")
         return
+
+    if u_data not in TICKERS:
+        TICKERS[u_data] = FPSTickers(src_id=u_data)
+    TICKERS[u_data].tick()
 
     batch_meta = pyds.gst_buffer_get_nvds_batch_meta(hash(gst_buffer))
     l_frame = batch_meta.frame_meta_list
@@ -119,7 +143,9 @@ def main(args):
         # sources
         source = _create_Gst_element(type="filesrc", name=f"file-source-{i}")
         qtdemux = _create_Gst_element(type="qtdemux", name=f"qtdemux-{i}")
-        parser = _create_Gst_element(type=f"{args.codec}parse", name=f"{args.codec}-parser-{i}")
+        parser = _create_Gst_element(
+            type=f"{args.codec}parse", name=f"{args.codec}-parser-{i}"
+        )
         decoder = _create_Gst_element(type="nvv4l2decoder", name=f"decoder-{i}")
 
         # sinks
@@ -280,7 +306,12 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--video-path", type=str, help="path to video file", default="/opt/nvidia/deepstream/deepstream-6.1/samples/streams/sample_1080p_h264.mp4")
+    parser.add_argument(
+        "--video-path",
+        type=str,
+        help="path to video file",
+        default="/opt/nvidia/deepstream/deepstream-6.1/samples/streams/sample_1080p_h264.mp4",
+    )
     parser.add_argument(
         "--pgie-config",
         type=str,
